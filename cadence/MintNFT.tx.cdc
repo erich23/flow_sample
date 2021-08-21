@@ -26,9 +26,9 @@ transaction (receiverAddress: Address, resourceUri: String, metadataUri: String)
 
         // Use the minter reference to mint an NFT, which deposits
         // the NFT into the collection that is sent as a parameter.
-        let newNFT <- self.minterRef.mintNFT()
+        let newNFT <- self.minterRef.mintNFT(metadata: {"resourceUri": resourceUri, "metadataUri": metadataUri})
 
         // Deposit the NFT in the receivers collection
-        receiverRef.deposit(token: <-newNFT, metadata: {"resourceUri": resourceUri, "metadataUri": metadataUri})
+        receiverRef.deposit(token: <-newNFT)
     }
 }

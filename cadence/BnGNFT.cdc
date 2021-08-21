@@ -15,9 +15,14 @@ pub contract BnGNFTContract {
     pub resource NFT {
         // The unique ID that differentiates each NFT
         pub let id: UInt64
+        pub var NFTMetadata: {String : String}
         // Initialize the field in the init function
-        init(initID: UInt64) {
+        init(initID: UInt64, NFTMetadata : {String : String}) {
             self.id = initID
+            self.NFTMetadata = NFTMetadata
+        }
+        pub fun getNFTMetadata() : {String : String} {
+            return self.NFTMetadata
         }
     }
 
@@ -27,13 +32,13 @@ pub contract BnGNFTContract {
     // and idExists fields in their Collection
     pub resource interface NFTReceiver {
 
-        pub fun deposit(token: @NFT, metadata: {String:String})
+        pub fun deposit(token: @NFT)
 
         pub fun getIDs(): [UInt64]
 
         pub fun idExists(id: UInt64): Bool
 
-        pub fun getMetadataByID(id: UInt64): {String: String}
+        pub fun getMetadataByID(id: UInt64): {String: String}?
     }
 
     // The definition of the Collection resource that
@@ -42,12 +47,10 @@ pub contract BnGNFTContract {
         // dictionary of NFT conforming tokens
         // NFT is a resource type with an `UInt64` ID field
         pub var ownedNFTs: @{UInt64: NFT}
-        pub var NFTMetadata: {UInt64: { String : String }}
 
         // Initialize the NFTs field to an empty collection
         init () {
             self.ownedNFTs <- {}
-            self.NFTMetadata = {}
         }
 
         // withdraw 
@@ -62,10 +65,9 @@ pub contract BnGNFTContract {
         }
 
         // deposit 
-        pub fun deposit(token: @NFT, metadata:{String:String}) {
+        pub fun deposit(token: @NFT) {
             // add the new token to the dictionary with a force assignment
             // if there is already a value at that key, it will fail and revert
-            self.NFTMetadata[token.id] = metadata
             self.ownedNFTs[token.id] <-! token
         }
 
@@ -80,8 +82,8 @@ pub contract BnGNFTContract {
             return self.ownedNFTs.keys
         }
 
-        pub fun getMetadataByID(id: UInt64): {String: String} {
-            return self.NFTMetadata[id]!
+        pub fun getMetadataByID(id: UInt64): {String: String}? {
+            return self.ownedNFTs[id]?.getNFTMetadata()
         }
 
         destroy() {
@@ -114,10 +116,10 @@ pub contract BnGNFTContract {
         //
         // Function that mints a new NFT with a new ID
         // and returns it to the caller
-        pub fun mintNFT(): @NFT {
+        pub fun mintNFT(metadata: {String:String}): @NFT {
             
             // create a new NFT
-            var newNFT <- create NFT(initID: self.idCount)
+            var newNFT <- create NFT(initID: self.idCount, NFTMetadata: metadata)
 
             // change the id so that each ID is unique
             self.idCount = self.idCount + 1 as UInt64
